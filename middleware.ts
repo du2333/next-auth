@@ -18,8 +18,8 @@ export default auth((req) => {
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
   // 根据登录状态和访问路径来决定该重定向还是。。
   if (isApiAuthRoute) {
-    // 返回null就是直接放行
-    return null;
+    // 返回undefined表示放行
+    return undefined;
   }
 
   if (isAuthRoute) {
@@ -28,14 +28,14 @@ export default auth((req) => {
       return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
 
-    return null;
+    return undefined;
   }
 
   if (!isLoggedIn && !isPublicRoute) {
     return Response.redirect(new URL("/auth/login", nextUrl));
   }
 
-  return null;
+  return undefined;
 });
 
 // Optionally, don't invoke Middleware on some paths
