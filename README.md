@@ -8,9 +8,9 @@
     - [x] Create user
     - [x] Login user
     - [x] New user email verification
-    - [ ] Forgot password
+    - [x] Forgot password
 - [x] Setup Middleware & Login
     - [x] Protected routes
     - [x] Public routes
-- [ ] Two Factor Authentication
+- [x] Two Factor Authentication
 - [ ] Settings page

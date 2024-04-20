@@ -18,14 +18,16 @@ enum UserRole {
 //model User：这部分定义了一个名为 "User" 的数据库模型。这个模型有多个字段，包括 id、name、email 等。每个字段后面的注解（例如 @id、@default(cuid())、@unique）定义了字段的特性。例如，@id 表示这是一个主键字段，@default(cuid()) 表示默认值是一个 cuid，@unique 表示这个字段的值必须是唯一的。
 
 model User {
-  id            String    @id @default(cuid()) 
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole  @default(USER)
-  accounts      Account[]
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String                 @unique
+  emailVerified         DateTime?
+  image                 String?
+  password              String?
+  role                  UserRole               @default(USER)
+  accounts              Account[]
+  isTwoFactorEnabled    Boolean                @default(false)
+  twoFactorConfirmation TwoFactorConfirmation?
 }
 
 model Account {
@@ -45,24 +47,44 @@ model Account {
   // 上面的userId是来自User表里的id字段，当User被删除时，关联的Account也会被删除
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 这两个字段的组合必须是唯一的。换句话说，数据库中不应存在两条具有相同 provider 和 providerAccountId 的记录。
+  // 在当前表中，这两个字段的组合必须是唯一的。
   @@unique([provider, providerAccountId])
 }
 
 model VerificationToken {
-  id String @id @default(cuid())
-  email String
-  token String @unique
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
   expires DateTime
 
   @@unique([email, token])
 }
 
 model PasswordResetToken {
-  id String @id @default(cuid())
-  email String
-  token String @unique
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
   expires DateTime
 
   @@unique([email, token])
+}
+
+model TwoFactorToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model TwoFactorConfirmation {
+  id String @id @default(cuid())
+  // expires DateTime // Optional, 2FA expiration time
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 表示在当前表中的唯一性，一下写法和在userId String后面加@unique的效果是一样的
+  @@unique([userId])
 }

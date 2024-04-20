@@ -2,6 +2,14 @@ import nodemailer from "nodemailer";
 
 const domain = process.env.NEXT_PUBLIC_APP_URL;
 
+export const sendTwoFactorEmail = async (email: string, token: string) => {
+  await send({
+    to: email,
+    subject: "2FA Code",
+    html: `<p>Your 2FA Code: ${token}</p>`,
+  });
+};
+
 export const sendVerificationEmail = async (email: string, token: string) => {
   const confirmationLink = `${domain}/auth/new-verification?token=${token}`;
 

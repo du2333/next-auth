@@ -4,6 +4,7 @@ import authConfig from "@/auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { getUserById } from "@/data/user";
+import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
 
 // 自己来扩展默认的属性
 declare module "next-auth" {
@@ -34,9 +35,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       });
     },
   },
-  // 修改回调函数逻辑，比如要往token，session里添加自定义属性
+  // 修改回调函数逻辑，比如要往token，session里添加自定义属性，自定义登录逻辑
   callbacks: {
-    // 添加登录的第二道屏障，这里的回调函数会在上面导出的signIn函数里被调用
     async signIn({ user, account }) {
       // Allow Oauth login
       if (account?.provider !== "credentials") return true;
@@ -46,11 +46,26 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         // Prevent sign in without email verification
         if (!existingUser?.emailVerified) return false;
+
+        // Check 2FA
+        if (existingUser.isTwoFactorEnabled) {
+          // check if the 2FA code has been verified
+          const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(
+            existingUser.id
+          );
+
+          if (!twoFactorConfirmation) return false;
+
+          // delete the 2FA confirmation for the next log in
+          await db.twoFactorConfirmation.delete({
+            where: {
+              id: twoFactorConfirmation.id,
+            },
+          });
+        }
       } else {
         return false;
       }
-
-      // TODO: Add 2FA check
 
       return true;
     },
