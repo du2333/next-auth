@@ -1,25 +1,11 @@
-import NextAuth, { type DefaultSession } from "next-auth";
-import { JWT } from "next-auth/jwt";
+import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { UserRole } from "@prisma/client";
+
 import { db } from "@/lib/db";
 import { getUserById } from "@/data/user";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
-
-// 自己来扩展默认的属性
-declare module "next-auth" {
-  interface Session {
-    user: {
-      role: "ADMIN" | "USER";
-    } & DefaultSession["user"];
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: "ADMIN" | "USER";
-  }
-}
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   pages: {
@@ -78,6 +64,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
       // 把user role传递给 token
       token.role = existingUser.role;
+      token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled
 
       return token;
     },
@@ -89,7 +76,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
       if (token.role && session.user) {
         // 把它添加到session里，这样子浏览器端也可以访问到此id
-        session.user.role = token.role;
+        session.user.role = token.role as UserRole;
+      }
+      if (session.user) {
+        session.user.isTwoFactorEnabled = token.isTwoFactorEnabled as boolean;
       }
 
       return session;
